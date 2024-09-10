@@ -9,6 +9,7 @@ use App\Models\Business;
 use App\Models\BusinessUser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
 
 class PayItemService
 {
@@ -16,23 +17,27 @@ class PayItemService
     {
         DB::beginTransaction();
         try {
-            foreach ($payItems as $item) {
-                $itemDTO = new PayItemDTO($item);
+            $chunks = collect($payItems)->chunk(100);
 
-                $businessUser = BusinessUser::where('external_id', $itemDTO->employeeId)->first();
+            $chunks->each(function (Collection $payItemChunk) use ($business) {
+                $payItemChunk->each(function ($item) use ($business) {
+                    $itemDTO = new PayItemDTO($item);
 
-                if (!$businessUser) {
-                    Log::warning("No business user found with external ID: " . $itemDTO->employeeId);
-                    continue;
-                }
+                    $businessUser = BusinessUser::where('external_id', $itemDTO->employeeId)->first();
 
-                $user = $businessUser->user;
+                    if (!$businessUser) {
+                        Log::warning("No business user found with external ID: " . $itemDTO->employeeId);
+                        return; 
+                    }
 
-                $deductionPercentage = $business->deduction_percentage;
-                $amount = $this->calculateAmount($itemDTO->hoursWorked, $itemDTO->payRate, $deductionPercentage);
+                    $user = $businessUser->user;
 
-                $this->createOrUpdatePayItem($itemDTO, $user, $business, $amount);
-            }
+                    $deductionPercentage = $business->deduction_percentage;
+                    $amount = $this->calculateAmount($itemDTO->hoursWorked, $itemDTO->payRate, $deductionPercentage);
+
+                    $this->createOrUpdatePayItem($itemDTO, $user, $business, $amount);
+                });
+            });
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
