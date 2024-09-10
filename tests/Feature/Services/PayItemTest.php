@@ -12,7 +12,7 @@ class PayItemTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_pay_item_calculation_with_deduction_percentage_persists()
+    public function test_pay_item_calculation_with_deduction_percentage_persists(): void
     {
         $faker = \Faker\Factory::create();
 
@@ -48,7 +48,7 @@ class PayItemTest extends TestCase
     }
 
 
-    public function test_pay_item_calculation_with_default_deduction_percentage_persists()
+    public function test_pay_item_calculation_with_default_deduction_percentage_persists(): void
     {
         $faker = \Faker\Factory::create();
 

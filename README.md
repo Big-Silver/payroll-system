@@ -27,6 +27,7 @@ Follow these instructions to set up the project on your local machine for develo
    cd payroll-system
    composer install
    cp .env.example .env
+   update database values in env
    php artisan key:generate
    php artisan test
    php artisan migrate --seed

@@ -11,15 +11,15 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 
 class SyncPayItemTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
-    public function test_request_made_to_imaginary_api_is_successfull()
+    public function test_request_made_to_imaginary_api_is_successfull(): void
     {
-        $path = base_path('tests/fixtures/pay_items_response.json');
-        $fakeResponse = json_decode(file_get_contents($path), true);
+        $fakeResponse = self::fakeRespone();
         $clairApiKey = config('services.clair.api_key');
 
         $business = Business::factory()->create();
@@ -38,7 +38,7 @@ class SyncPayItemTest extends TestCase
         );
     }
 
-    public function test_request_made_to_imaginary_api_logs_error_if_client_is_unauthorized()
+    public function test_request_made_to_imaginary_api_logs_error_if_client_is_unauthorized(): void
     {
         Http::fake([
             'https://some-partner-website.com/*' => Http::response(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED)
@@ -53,7 +53,7 @@ class SyncPayItemTest extends TestCase
         $this->assertEquals(Response::HTTP_UNAUTHORIZED, $response->status());
     }
 
-    public function test_request_made_to_imaginary_api_logs_critical_if_not_found()
+    public function test_request_made_to_imaginary_api_logs_critical_if_not_found(): void
     {
         Http::fake([
             'https://some-partner-website.com/*' => Http::response(['error' => 'Unauthorized'], Response::HTTP_NOT_FOUND)
@@ -69,10 +69,9 @@ class SyncPayItemTest extends TestCase
     }
 
 
-    public function test_payitems_for_specific_business_is_processed_successfully()
+    public function test_payitems_for_specific_business_is_processed_successfully(): void
     {
-        $path = base_path('tests/fixtures/pay_items_response.json');
-        $fakeResponse = json_decode(file_get_contents($path), true);
+        $fakeResponse = self::fakeRespone();
 
         $mockData = self::payItems();
 
@@ -115,5 +114,10 @@ class SyncPayItemTest extends TestCase
             ],
             "isLastPage" => false
         ];
+    }
+
+    private static function fakeRespone(): array
+    {
+        return json_decode(File::get('tests/fixtures/pay_items_response.json'), true);
     }
 }
